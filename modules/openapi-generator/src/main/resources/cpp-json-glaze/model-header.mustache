@@ -1,0 +1,142 @@
+#pragma once
+{{>licenseInfo}}
+{{#models}}{{#model}}/*
+ * {{classname}}.h
+ *
+ * {{description}}
+ */
+
+// imports
+{{#imports}}{{{this}}}
+{{/imports}}
+// end imports
+#include <memory>
+#include <vector>
+{{#hasEnums}}
+#include <array>
+{{/hasEnums}}
+// interfaces
+{{#interfaces}}
+#include "{{{this}}}.h"
+{{/interfaces}}
+// end interfaces
+#include "glaze/glaze.hpp"
+
+{{#oneOf}}{{#-first}}#include <variant>{{/-first}}{{/oneOf}}
+
+{{#oneOf}}{{#-first}}{{>model-header-oneof}}{{/-first}}{{/oneOf}}{{^oneOf}}
+
+namespace {{modelNamespace}}::{{packageName}}::model {
+
+/// <summary>
+/// {{description}}
+/// </summary>
+{{#circularReferences}}
+class  {{{this}}};
+{{/circularReferences}}
+
+class {{classname}}; // nb circular reference seems not to work
+
+//using {{classname}}Ptr = std::shared_ptr<{{classname}}>;
+// tofix
+//using {{classname}}PtrArray = std::vector<{{classname}}Ptr>;
+
+typedef std::shared_ptr<{{classname}}> {{classname}}Ptr;
+// tofix
+typedef std::vector<{{classname}}Ptr> {{classname}}PtrArray;
+
+class {{declspec}} {{classname}} {{#interfaces}}{{#-first}}:{{/-first}}{{^-first}},{{/-first}} public {{{this}}}{{/interfaces}}
+{
+public:
+    //{{classname}}() = default;
+    //explicit {{classname}}(boost::property_tree::ptree const& pt);
+    //~{{classname}}() = default;
+
+    //std::string toJsonString(bool prettyJson = false) const;
+    //void fromJsonString(std::string const& jsonString);
+    //boost::property_tree::ptree toPropertyTree() const;
+    //void fromPropertyTree(boost::property_tree::ptree const& pt);
+
+    /////////////////////////////////////////////
+    /// {{classname}} members
+    {{#vars}}
+
+    /// <summary>
+    /// {{description}}
+    /// </summary>
+    {{{dataType}}} {{getter}}() const;
+    void {{setter}}(const {{{dataType}}}& value);
+    {{/vars}}
+
+// leave members public with glaze
+// protected:
+    {{#vars}}
+    {{^isContainer}}
+    {{^isModel}}
+    {{{dataType}}} m_{{name}} = {{{defaultValue}}};
+    {{/isModel}}
+    {{#isModel}}
+    {{{dataType}}} m_{{name}};
+    {{/isModel}}
+    {{/isContainer}}
+    {{#isContainer}}
+    {{{dataType}}} m_{{name}};
+    {{/isContainer}}
+    {{/vars}}
+    {{#vars}}
+    {{#isEnum}}
+    // AO note reput enum
+    //const std::array<std::string, {{#allowableValues}}{{#enumVars}}{{#-last}}{{-index}}{{/-last}}{{/enumVars}}{{/allowableValues}}> m_{{enumName}} = {
+    //      {{#allowableValues}}{{#enumVars}}"{{{value}}}"{{^-last}},{{/-last}}{{/enumVars}}{{/allowableValues}}
+    //};
+
+    {{/isEnum}}
+    {{/vars}}
+    {{#handleExtraFields}}
+    std::map<glz::sv, glz::raw_json> __extra_fields;
+    {{/handleExtraFields}}
+};
+
+} // namespace {{modelNamespace}}::{{packageName}}::model
+
+{{/oneOf}}
+
+// haschildren test
+{{#hasChildren}}
+// yes : has children    
+      {{#discriminator}}
+      // discriminator
+      // propertybasename : {{{propertyBaseName}}}"
+      // mapped models
+      {{#mappedModels}}
+        //case "{{mappingName}}":
+        //  {{modelName}}.validateJsonElement(jsonElement);
+        //  break;
+      {{/mappedModels}}
+      {{/discriminator}}
+{{/hasChildren}}
+
+{{^oneOf}}
+
+template <>
+struct glz::meta<{{modelNamespace}}::{{packageName}}::model::{{classname}}>
+{
+   using T = {{modelNamespace}}::{{packageName}}::model::{{classname}};
+   static constexpr std::string_view name = "{{name}}";
+   static constexpr auto value = object(
+       {{#vars}}
+    {{^isInherited}}
+    "{{baseName}}", &T::m_{{name}}{{^-last}},{{/-last}}
+    {{/isInherited}}
+    {{/vars}}
+    );
+    {{#handleExtraFields}}
+    static constexpr auto unknown_write{&T::__extra_fields};
+    static constexpr auto unknown_read{&T::__extra_fields};
+    {{/handleExtraFields}}
+};
+{{/oneOf}}
+
+{{/model}}
+{{/models}}
+

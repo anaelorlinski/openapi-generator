@@ -1,0 +1,40 @@
+{{>licenseInfo}}
+{{#models}}{{#model}}
+
+#include "{{#modelNamespaceDeclarations}}{{this}}/{{/modelNamespaceDeclarations}}{{packageName}}/model/{{classname}}.h"
+
+#include <string>
+#include <vector>
+#include <sstream>
+#include <stdexcept>
+{{#hasEnums}}
+#include <algorithm>
+{{/hasEnums}}
+
+namespace {{modelNamespace}}::{{packageName}}::model {
+
+{{^oneOf}}
+
+{{#vars}}
+{{{dataType}}} {{classname}}::{{getter}}() const
+{
+    return m_{{name}};
+}
+
+void {{classname}}::{{setter}}(const {{{dataType}}}& value)
+{
+	// TODO : enable chech but this does not work with list of values
+	{{#isEnum}} // if (std::find(m_{{enumName}}.begin(), m_{{enumName}}.end(), value) != m_{{enumName}}.end()) {
+		{{/isEnum}}m_{{name}} = value;{{#isEnum}}
+	//} else {
+	//	throw std::runtime_error("Value " + value + " not allowed");
+	//}{{/isEnum}}
+}
+{{/vars}}
+
+{{/oneOf}}
+
+} // namespace {{modelNamespace}}::{{packageName}}::model
+
+{{/model}}
+{{/models}}

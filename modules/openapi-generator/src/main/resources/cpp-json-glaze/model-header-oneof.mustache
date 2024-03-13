@@ -1,0 +1,27 @@
+//oneof implem TODO
+
+namespace {{modelNamespace}}::{{packageName}}::model {
+
+using {{classname}} = std::variant<{{#oneOf}}{{^-first}}, {{/-first}}{{{.}}}{{/oneOf}}>;
+// dirty workaround :D // use a lambda over getTypeDeclaration
+//using {{classname}} = std::variant<{{#oneOf}}{{^-first}}, {{/-first}}std::shared_ptr<{{{.}}}>{{/oneOf}}>;
+
+using {{classname}}Ptr = std::shared_ptr<{{classname}}>;
+// tofix
+using {{classname}}PtrArray = std::vector<{{classname}}Ptr>;
+
+} // namespace {{modelNamespace}}::{{packageName}}::model
+
+template <>
+struct glz::meta<{{modelNamespace}}::{{packageName}}::model::{{classname}}>
+{
+   static constexpr std::string_view name = "{{name}}";
+   {{#discriminator}}
+	// variant discriminator propertyName
+	{{#discriminator.propertyBaseName}}
+	static constexpr std::string_view tag = "{{discriminator.propertyBaseName}}";
+	// unfinished static constexpr auto ids = std::array{ {{#oneOf}}{{^-first}}, {{/-first}}{{.}}{{/oneOf}} };
+	{{/discriminator.propertyBaseName}}
+	// TODO ? use discriminator mapping if avail ?
+   {{/discriminator}}
+};

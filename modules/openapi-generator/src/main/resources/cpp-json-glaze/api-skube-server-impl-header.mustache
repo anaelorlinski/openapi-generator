@@ -1,0 +1,26 @@
+#pragma once
+{{#imports}}{{{import}}}
+{{/imports}}
+#include "{{#apiNamespaceDeclarations}}{{this}}/{{/apiNamespaceDeclarations}}{{packageName}}/api/{{classname}}_Responses.h"
+
+namespace {{apiNamespace}}::{{packageName}}::impl {
+
+class {{classname}}Impl {
+public:
+{{#operations}}
+{{#operation}}
+    {{#bodyParam}}
+    {{apiNamespace}}::{{packageName}}::api::{{classname}}_{{operationId}}_Response {{operationId}}({{#bodyParam}}{{modelNamespace}}::{{packageName}}::model::{{&dataType}}{{/bodyParam}});
+    {{/bodyParam}}
+    
+    {{^bodyParam}}
+    // no body param
+    // TODO : merge ?
+    {{apiNamespace}}::{{packageName}}::api::{{classname}}_{{operationId}}_Response {{operationId}}();
+    {{/bodyParam}}
+    
+{{/operation}}
+{{/operations}}
+};
+
+} // namespace {{apiNamespace}}::{{packageName}}::impl

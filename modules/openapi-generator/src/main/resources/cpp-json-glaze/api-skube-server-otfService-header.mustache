@@ -1,0 +1,213 @@
+#pragma once
+{{>licenseInfo}}
+/*
+ * {{classname}}.h
+ *
+ * {{description}}
+ */
+
+{{{defaultInclude}}}
+//#include "ApiBase.h"
+
+//#include <pistache/http.h>
+//#include <pistache/router.h>
+//#include <pistache/http_headers.h>
+{{^hasModelImport}}//#include <nlohmann/json.hpp>{{/hasModelImport}}
+#include <optional>
+#include <utility>
+
+#include "{{classname}}_Responses.h"
+
+#include "otf/Service.h"
+#include "otf/RESTInboundRequest.h"
+#include "otf/RESTOutboundResponse.h"
+#include "otf/resources/Resources.h"
+#include "otf/resources/Sender.h"
+
+{{#imports}}{{{import}}}
+{{/imports}}
+
+namespace {{apiNamespace}}::{{packageName}}::api {
+
+template <class {{classname}}Impl>
+class {{declspec}} {{classname}}OtfService : public otf::Service {
+ public:
+    {{classname}}OtfService(std::shared_ptr<otf::api::ServiceInterface> iImpl) : otf::Service(iImpl) {
+
+    }
+    {{#operations}}
+    {{#operation}}
+    /// <summary>
+    /// {{summary}}
+    /// </summary>
+    /// <remarks>
+    /// {{notes}}
+    /// </remarks>
+    otf::ServiceStatus_t {{operationId}}(otf::RESTInboundRequest& request)
+    {
+        {{^bodyParam}}
+        // temp to avoid unused param
+        if (!request.hasContentType()) {
+            
+        }
+        {{/bodyParam}}
+
+        {{#bodyParam}}
+        // json is needed. TODO : update to describe it from openapi spec
+        if (request.hasContentType() && request.getContentType().rfind("application/json") == std::string::npos) {
+            // AO : TODO
+            // handle properly error with openapi spec
+            otf::RESTOutboundResponse response(otf::HTTPStatus_t::kHTTPErrBadRequest);
+            response.setContentType("text/plain");
+            response.setBodyData("need application/json");
+            getResources().getSender().reply(response);
+            return otf::ServiceStatus_t::kServiceStatusKo;
+        }
+        
+        // decode the body.
+        {{^isPrimitiveType}}
+        {{^isContainer}}
+        // AO : tofix for containers ?
+        {{modelNamespace}}::{{packageName}}::model::{{&dataType}} {{paramName}};{{/isContainer}}
+        {{#isArray}}std::vector<{{items.baseType}}> {{paramName}};{{/isArray}}
+        {{#isMap}}std::map<std::string, {{items.baseType}}> {{paramName}};{{/isMap}}
+        {{/isPrimitiveType}}
+        
+        {{#isPrimitiveType}}
+        {{dataType}} {{paramName}};
+        {{/isPrimitiveType}}
+
+        std::string_view aJson(request.getRawBodyBuffer(), request.getRawBodySize());
+        glz::context ctx{};
+        
+        {{#handleExtraFields}}
+        auto ec = glz::read<glz::opts{.error_on_unknown_keys = false}>({{paramName}}, aJson, ctx);
+        {{/handleExtraFields}}
+        {{^handleExtraFields}}
+        auto ec = glz::read<glz::opts{.error_on_unknown_keys = true}>({{paramName}}, aJson, ctx);
+        {{/handleExtraFields}}
+        if (ec) {
+            // handle error
+            // TODO : use trc
+            std::cout << "Error at decoding time : " << glz::format_error(ec, aJson) << std::endl;
+        }
+
+        {{/bodyParam}}
+
+        //_impl.{{operationId}}({{paramName}});
+
+        {{#responses}}
+            // response {{code}}
+        {{#-first}} {{!-- We have no way to handle multiple return types today so we just handle the first }}
+            // first responses
+            {{#is2xx}} // is 2xx
+                {{^dataType}}// datatype {{/dataType}}
+                {{#isMap}}// map {{/isMap}}
+                // {{#isArray}}(List {{#items}}{{#isModel}}Api.Data.{{/isModel}}{{/items}}{{/isArray}}{{^isArray}}{{^primitiveType}}{{^isUuid}}{{^isFile}}Api.Data.{{/isFile}}{{/isUuid}}{{/primitiveType}}{{/isArray}}{{dataType}}{{#isArray}}){{/isArray}}{{#isMap}}){{/isMap}}
+            {{/is2xx}}
+            {{^is2xx}}// not 2xx(){{/is2xx}}
+            {{classname}}_{{operationId}}_Response implResponse = _impl.{{operationId}}({{#bodyParam}}{{paramName}}{{/bodyParam}});
+            
+            {{#content}}
+                // content, get the JSon Response with model
+                //OLD std::expected<nicekube::JSONResponse<{{&dataType}}>, nicekube::ErrorCode> reply = _impl.{{operationId}}({{#bodyParam}}{{paramName}}{{/bodyParam}});
+            {{/content}}
+            {{^content}}
+                // no content, just get TextResponse
+                //OLD std::expected<nicekube::TextResponse, nicekube::ErrorCode> reply = _impl.{{operationId}}({{#bodyParam}}{{paramName}}{{/bodyParam}});
+            {{/content}}
+        {{/-first}}
+        {{/responses}}
+
+        std::string body;
+        {{#responses}}
+        if (implResponse._code == {{code}}) {
+            {{#content}}
+            if (implResponse._contentType == "application/json") {
+                glz::write<glz::opts{.prettify = false}>(implResponse._data_{{code}}, body);
+            } else {
+                // suppose this needs no encoding
+                body = implResponse._body;
+            }
+            {{/content}}
+            {{^content}}
+                body = implResponse._body;
+                implResponse._contentType = "text/plain";
+            {{/content}}
+            const otf::HTTPStatus_t aRespCode = static_cast<otf::HTTPStatus_t>(implResponse._code);
+            otf::RESTOutboundResponse response(aRespCode);
+            response.setContentType(implResponse._contentType);
+            response.setBodyData(body);
+            getResources().getSender().reply(response);
+            return otf::ServiceStatus_t::kServiceStatusOk;
+        }
+
+        //}
+        {{/responses}}
+        
+        
+
+/*
+        if (reply.has_value())
+        {
+            
+            
+            
+            
+            reply->encode();
+
+            // handle properly error with openapi spec
+            const otf::HTTPStatus_t aRespCode = static_cast<otf::HTTPStatus_t>(reply->_code);
+            otf::RESTOutboundResponse response(aRespCode);
+            response.setContentType(reply->_contentType);
+            response.setBodyData(reply->_body);
+            getResources().getSender().reply(response);
+            return otf::ServiceStatus_t::kServiceStatusOk;
+        }
+ */   
+        // AO tofix
+        return otf::ServiceStatus_t::kServiceStatusKo;
+    }
+    {{/operation}}
+    {{/operations}}
+
+    static void SetupRoutes(otf::RegistrationManager& registrationMgr, const std::string& aPack) {
+        std::shared_ptr<otf::ServiceAllocatorInterface<{{classname}}OtfService<{{classname}}Impl>>> allocator(
+            otf::ServiceDefaultAllocator<{{classname}}OtfService<{{classname}}Impl>>::GetAllocator());
+        const otf::ServicePack_t pack(aPack);
+
+        // TODO : unhardcode
+        std::chrono::steady_clock::duration aRto(std::chrono::seconds(2));
+        std::chrono::steady_clock::duration aIto(std::chrono::minutes(5));
+        std::chrono::steady_clock::duration aEto(std::chrono::minutes(1));
+
+      // TODO : confirm with OTF that we can call several times registerRESTServiceObject
+      // with the same path and it will not erase previous config.
+
+      {{#operations}}  
+      {{#operation}}
+        // operation {{{operationId}}}
+
+        registrationMgr
+            .registerRESTServiceObject( allocator,
+                                        pack,
+                                        "{{vendorExtensions.x-otf-path}}",
+                                        false, //exact match, put false by default but need to check
+                                        otf::RESTVersion(1),
+                                        true // autoregister special services ???
+                                        )
+            .registerRequestService(otf::HTTPMethod_t::kHTTPMethod{{#lambda.titlecase}}{{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}}{{/lambda.titlecase}},
+                                    &{{classname}}OtfService<{{classname}}Impl>::{{{operationId}}},
+                                    aRto,
+                                    aIto,
+                                    aEto);
+      {{/operation}}
+      {{/operations}}
+    }
+
+ private:
+  {{classname}}Impl _impl;
+};
+
+} // namespace {{apiNamespace}}::{{packageName}}::api
+

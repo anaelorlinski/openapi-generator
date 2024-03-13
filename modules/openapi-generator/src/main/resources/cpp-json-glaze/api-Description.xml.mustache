@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<componentDescription xmlns="http://gcnet/documentation/bms/metadata/1-0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0" xsi:schemaLocation="http://gcnet/documentation/bms/metadata/1-0/ http://gcnet/documentation/bms/metadata/1-0/Description_weak.xsd">
+    <properties name="{{modelNamespace}}::{{packageName}}::api">
+        <abstract>SKube C++ Demo</abstract>
+        <contactPoint>Anael Orlinski</contactPoint>
+        <configs>
+            <config name="main" default="true"/>
+        </configs>
+        <publicIncludes>
+            <dir name="src" filters="*.h *.hpp"/>
+        </publicIncludes>
+    </properties>
+    <componentPack>
+        <dependencies>
+            <dependenciesForConfig configs="main">
+                <versioner name="mdw::Pack" type="strong"/>
+                <dependency name="{{modelNamespace}}::{{packageName}}::model" type="external"/>
+            </dependenciesForConfig>
+        </dependencies>
+        <build>
+            <buildForConfig configs="main">
+                <library name="{{packageName}}Api" customizedName="true">
+                    <sources>
+                        <dir name="src" recursive="true" filters="*.cpp"/>
+                        <!--<dir name="../api/src" recursive="true" filters="*.cpp"/>-->
+                    </sources>
+                    <flags>
+                        <cppFlags>-Wall -Wextra -Werror</cppFlags>
+                    </flags>
+                </library>
+                <includes>
+                    <dir name="src" filters="*.h *.hpp"/>
+                    <!--<dir name="../api/src" filters="*.h *.hpp"/>-->
+                </includes>
+            </buildForConfig>
+        </build>
+        <delivery>
+            <dir name="lib"/>
+        </delivery>
+    </componentPack>
+</componentDescription>

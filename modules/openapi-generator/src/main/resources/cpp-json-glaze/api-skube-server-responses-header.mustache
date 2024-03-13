@@ -1,0 +1,83 @@
+#pragma once
+{{>licenseInfo}}
+/*
+ * {{classname}}.h
+ *
+ * {{description}}
+ */
+
+{{{defaultInclude}}}
+//#include "ApiBase.h"
+
+//#include <pistache/http.h>
+//#include <pistache/router.h>
+//#include <pistache/http_headers.h>
+{{^hasModelImport}}//#include <nlohmann/json.hpp>{{/hasModelImport}}
+#include <optional>
+#include <utility>
+
+//#include "{{classname}}.h"
+
+{{#imports}}{{{import}}}
+{{/imports}}
+
+namespace {{apiNamespace}}::{{packageName}}::api {
+
+{{#operations}}
+{{#operation}}
+
+class {{classname}}_{{operationId}}_Response {
+public:
+    {{#responses}}
+    // response {{code}}
+    {{#content}}
+        static {{classname}}_{{operationId}}_Response Reply{{code}}({{modelNamespace}}::{{packageName}}::model::{{&dataType}} data) {
+            {{classname}}_{{operationId}}_Response r;
+            r._code = {{ code }};
+            r._contentType = "application/json"; // TODO : should be contentType from openapi spec
+            r._data_{{code}} = data;
+            return r;
+        };
+    {{/content}}
+    {{^content}}
+        static {{classname}}_{{operationId}}_Response Reply{{code}}() {
+            {{classname}}_{{operationId}}_Response r;
+            r._code = {{ code }};
+            r._contentType = "text/plain";
+            return r;
+        };
+    {{/content}}
+    {{/responses}}
+    
+    std::string _body;
+    std::string _contentType;
+    int _code = 500; // TODO : handle default code
+
+    void encode() {};
+
+    {{#responses}}
+    // response {{code}} : {{ description }}
+    {{#content}}
+        // returns content of type : {{&dataType}}
+    {{/content}}
+    {{/responses}}
+
+    //////// returned data
+
+    // TODO : try using a variant for returned data
+    //std::variant<std::string{{#responses}}{{#content}},{{&dataType}}{{/content}}{{/responses}}> _data;
+
+    // not optimized yet
+    {{#responses}}
+    // response {{code}}
+    {{#content}}
+        {{modelNamespace}}::{{packageName}}::model::{{&dataType}} _data_{{code}};
+    {{/content}}
+    {{/responses}}
+};
+
+{{/operation}}
+{{/operations}}
+
+} // namespace {{apiNamespace}}::{{packageName}}::api
+

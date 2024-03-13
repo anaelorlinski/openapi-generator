@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<componentDescription xmlns="http://gcnet/documentation/bms/metadata/1-0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0" xsi:schemaLocation="http://gcnet/documentation/bms/metadata/1-0/ http://gcnet/documentation/bms/metadata/1-0/Description_weak.xsd">
+    <properties name="{{modelNamespace}}::{{packageName}}::model">
+        <abstract>SKube C++ Demo</abstract>
+        <contactPoint>Anael Orlinski</contactPoint>
+        <configs>
+            <config name="main" default="true"/>
+        </configs>
+        <publicIncludes>
+            <dir name="src" filters="*.h *.hpp"/>
+        </publicIncludes>
+    </properties>
+    <componentPack>
+        <dependencies>
+            <dependenciesForConfig configs="main">
+                <versioner name="mdw::Pack" type="strong"/>
+                <dependency name="osp::glaze" type="external"/>
+            </dependenciesForConfig>
+        </dependencies>
+        <build>
+            <buildForConfig configs="main">
+                <library name="{{packageName}}Model" customizedName="true">
+                    <sources>
+                        <dir name="model" recursive="true" filters="*.cpp"/>
+                    </sources>
+                    <flags>
+                        <cppFlags>-Wall -Wextra -Werror</cppFlags>
+                    </flags>
+                </library>
+                <includes>
+                    <dir name="model" filters="*.h *.hpp"/>
+                </includes>
+            </buildForConfig>
+        </build>
+        <delivery>
+            <dir name="lib"/>
+        </delivery>
+    </componentPack>
+</componentDescription>
